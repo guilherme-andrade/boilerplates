@@ -110,7 +110,6 @@ file 'app/views/layouts/application.html.erb', <<-CODE
 </html>
 CODE
 
-run %Q{ sed -i '15irequire "view_component/engine"' config/application.rb }
 
 run %Q{ curl -L https://github.com/guilherme-andrade/boilerplates/blob/master/boilerplates/sheen/javascript.zip?raw=true }
 run %Q{ unzip javascript.zip -d app/javascript }
@@ -129,15 +128,6 @@ after_bundle do
   run "hub create" if yes?('Create Repository?')
   git push: 'origin master'
 end
-
-
-
-
-
-
-
-
-
 
 
 
@@ -184,7 +174,6 @@ Pwa.configure do |config|
 end
   CODE
 
-  run %Q{ sed -i '8i  <%= component 'pwa/manifest', url: request.base_url %>' app/views/application/_head.html.erb }
 
   file 'app/javascript/src/vendor/pwa.js', <<-CODE
 import ProgressiveWebApp from 'pwa-rails';
@@ -193,5 +182,4 @@ document.addEventListener('turbolinks:load', () => {
 })
   CODE
 
-  run %Q{ sed -i '4iimport \'./rails\';' app/javascript/src/vendor/index.js }
 end
