@@ -42,10 +42,9 @@ end
 CODE
 
 rails_command 'active_storage:install'
+rails_command 'webpacker:install'
 rails_command 'webpacker:install:stimulus'
 rails_command 'stimulus_reflex:install'
-
-run 'cd app'
 
 run 'yarn add bootstrap@^5.0.0-alpha1 bootstrap-icons animate.css axios trix popper.js prismjs resolve-url-loader'
 
