@@ -12,7 +12,6 @@ gem 'stimulus_reflex', '~> 3.2'
 gem 'turbolinks', '~> 5'
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 gem 'view_component', '~> 2.13'
-gem 'view_component_reflex', git: 'https://github.com/joshleblanc/view_component_reflex'
 gem 'webpacker', '~> 4.0'
 
 gem_group :development, :test do
@@ -29,6 +28,8 @@ gem_group :development do
 end
 
 rails_command 'bundle install'
+
+gem 'view_component_reflex'
 
 environment <<-CODE
 config.generators do |generate|
