@@ -1,0 +1,33 @@
+.xsmall {
+  font-size: 1.2rem;
+}
+
+.xxsmall {
+  font-size: .75rem;
+}
+
+
+.link {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
+  padding-bottom: .5rem;
+
+  &::after {
+    content: '';
+    position: absolute;
+    background: $body-color;
+    height: 3px;
+    left: 50%;
+    bottom: 0;
+    width: 0%;
+    transition: all .25s ease-in-out;
+  }
+
+  &:hover {
+    &::after {
+      width: 100%;
+      left: 0;
+    }
+  }
+}

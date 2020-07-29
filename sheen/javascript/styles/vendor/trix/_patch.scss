@@ -1,0 +1,11 @@
+.trix-button {
+  background: $body-color !important;
+}
+
+.trix-content {
+  min-height: 400px;
+
+  blockquote {
+    border: none;
+  }
+}
