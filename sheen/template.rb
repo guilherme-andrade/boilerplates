@@ -29,7 +29,7 @@ end
 
 run 'bundle install'
 
-gem 'view_component_reflex'
+gem 'view_component_reflex', git: 'https://github.com/joshleblanc/view_component_reflex'
 
 environment <<-CODE
 config.generators do |generate|
