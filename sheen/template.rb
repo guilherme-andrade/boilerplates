@@ -1,4 +1,7 @@
-add_source 'https://rubygems.org'
+file 'Gemfile', <<-CODE
+source 'https://rubygems.org'
+git_source(:github) { |repo| "https://github.com/#{repo}.git" }
+CODE
 
 gem 'bootsnap', '>= 1.4.2', require: false
 gem 'cloudinary'
@@ -28,8 +31,6 @@ gem_group :development do
 end
 
 run 'bundle install'
-
-gem 'view_component_reflex', git: 'https://github.com/joshleblanc/view_component_reflex'
 
 environment <<-CODE
 config.generators do |generate|
