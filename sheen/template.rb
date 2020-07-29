@@ -1,6 +1,6 @@
 file 'Gemfile', <<-CODE
 source 'https://rubygems.org'
-git_source(:github) { |repo| "https://github.com/#{repo}.git" }
+git_source(:github) { |repo| "https://github.com/\#{repo}.git" }
 CODE
 
 gem 'bootsnap', '>= 1.4.2', require: false
