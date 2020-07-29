@@ -109,7 +109,6 @@ file 'app/views/layouts/application.html.erb', <<-CODE
   </body>
 </html>
 CODE
-svn export
 
 run %Q{ sed -i '15irequire "view_component/engine"' config/application.rb }
 
