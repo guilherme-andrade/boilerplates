@@ -1,3 +1,59 @@
+
+
+def add_users
+  gem 'devise'
+
+  rails_command "generate devise:install"
+  environment %Q{ config.action_mailer.default_url_options = { host: 'localhost', port: 3000 } }, env: :development
+
+  generate :devise, "user"
+
+  file 'app/reflexes/application_reflex.rb', <<-CODE
+class ApplicationReflex < StimulusReflex::Reflex
+  delegate :current_user, to: :connection
+end
+  CODE
+
+  file 'app/channels/application_cable/connection.rb ', <<-CODE
+module ApplicationCable
+  class Connection < ActionCable::Connection::Base
+    identified_by :current_user
+
+    def connect
+      self.current_user = env["warden"].user || reject_unauthorized_connection
+    end
+  end
+end
+  CODE
+end
+
+def pwa
+  gem 'pwa'
+  run 'yarn add pwa-rails'
+
+  rails_command 'g mozaic:install'
+  rails_command 'g pwa:install'
+  rails_command 'g pwa:app -n "App"'
+
+  route %Q{ mount Pwa::Engine, at: '' }
+
+  initializer 'pwa.rb', <<-CODE
+Pwa.configure do |config|
+  config.define_app 'App'
+end
+  CODE
+
+
+  file 'app/javascript/src/vendor/pwa.js', <<-CODE
+import ProgressiveWebApp from 'pwa-rails';
+document.addEventListener('turbolinks:load', () => {
+  const progressiveWebApp = new ProgressiveWebApp();
+})
+  CODE
+
+end
+
+
 file 'Gemfile', <<-CODE
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/\#{repo}.git" }
@@ -129,57 +185,3 @@ after_bundle do
   git push: 'origin master'
 end
 
-
-
-def add_users
-  gem 'devise'
-
-  rails_command "generate devise:install"
-  environment %Q{ config.action_mailer.default_url_options = { host: 'localhost', port: 3000 } }, env: :development
-
-  generate :devise, "user"
-
-  file 'app/reflexes/application_reflex.rb', <<-CODE
-class ApplicationReflex < StimulusReflex::Reflex
-  delegate :current_user, to: :connection
-end
-  CODE
-
-  file 'app/channels/application_cable/connection.rb ', <<-CODE
-module ApplicationCable
-  class Connection < ActionCable::Connection::Base
-    identified_by :current_user
-
-    def connect
-      self.current_user = env["warden"].user || reject_unauthorized_connection
-    end
-  end
-end
-  CODE
-end
-
-def pwa
-  gem 'pwa'
-  run 'yarn add pwa-rails'
-
-  rails_command 'g mozaic:install'
-  rails_command 'g pwa:install'
-  rails_command 'g pwa:app -n "App"'
-
-  route %Q{ mount Pwa::Engine, at: '' }
-
-  initializer 'pwa.rb', <<-CODE
-Pwa.configure do |config|
-  config.define_app 'App'
-end
-  CODE
-
-
-  file 'app/javascript/src/vendor/pwa.js', <<-CODE
-import ProgressiveWebApp from 'pwa-rails';
-document.addEventListener('turbolinks:load', () => {
-  const progressiveWebApp = new ProgressiveWebApp();
-})
-  CODE
-
-end
