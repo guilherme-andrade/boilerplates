@@ -111,7 +111,7 @@ file 'app/views/layouts/application.html.erb', <<-CODE
 CODE
 
 
-run %Q{ wget https://github.com/guilherme-andrade/boilerplates/blob/master/boilerplates/sheen/javascript.zip?raw=true }
+run %Q{ curl -O https://github.com/guilherme-andrade/boilerplates/blob/master/boilerplates/sheen/javascript.zip?raw=true }
 run %Q{ unzip javascript.zip -d app/javascript }
 run %Q{ rm javascript.zip }
 
