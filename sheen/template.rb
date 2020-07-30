@@ -1,5 +1,3 @@
-
-
 def add_users
   gem 'devise'
 
@@ -50,7 +48,6 @@ document.addEventListener('turbolinks:load', () => {
   const progressiveWebApp = new ProgressiveWebApp();
 })
   CODE
-
 end
 
 
@@ -168,7 +165,7 @@ CODE
 
 
 run %Q{ curl -O https://raw.githubusercontent.com/guilherme-andrade/boilerplates/master/sheen/javascript.zip }
-run %Q{ unzip javascript.zip -d app/javascript }
+run %Q{ unzip javascript.zip -d app }
 run %Q{ rm javascript.zip }
 
 generate :controller, "static home"
