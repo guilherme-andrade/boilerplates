@@ -41,6 +41,7 @@ Pwa.configure do |config|
 end
   CODE
 
+run %Q{ sed '8i\\\n<%= component 'pwa/manifest', url: request.base_url %>\\\n' app/views/application/_head.html.erb }
 
   file 'app/javascript/src/vendor/pwa.js', <<-CODE
 import ProgressiveWebApp from 'pwa-rails';
@@ -50,11 +51,12 @@ document.addEventListener('turbolinks:load', () => {
   CODE
 end
 
+def create_repo_and_push
+  run 'hub create'
+  git push: 'origin master'
+end
 
-file 'Gemfile', <<-CODE
-source 'https://rubygems.org'
-git_source(:github) { |repo| "https://github.com/\#{repo}.git" }
-CODE
+run %Q{ sed '2i\\\ngit_source(:github) { |repo| "https://github.com/\\\#{repo}.git" }\\\n' Gemfile }
 
 gem 'bootsnap', '>= 1.4.2', require: false
 gem 'cloudinary'
@@ -76,6 +78,7 @@ gem_group :development, :test do
 end
 
 gem_group :development do
+  gem 'foreman'
   gem 'guard-livereload'
   gem 'listen', '~> 3.2'
   gem 'rack-livereload'
@@ -86,6 +89,14 @@ end
 
 run 'bundle install'
 
+rails_command 'generate simple_form:install'
+rails_command 'generate simple_form:install --bootstrap'
+rails_command 'stimulus_reflex:install'
+rails_command 'active_storage:install'
+
+generate :controller, "static home"
+route "root to: 'static#home'"
+
 environment <<-CODE
 config.generators do |generate|
   generate.helper false
@@ -94,91 +105,60 @@ config.generators do |generate|
 end
 CODE
 
-rails_command 'active_storage:install'
-rails_command 'webpacker:install'
-rails_command 'webpacker:install:stimulus'
-rails_command 'stimulus_reflex:install'
-
 run 'yarn add bootstrap@^5.0.0-alpha1 bootstrap-icons animate.css axios trix popper.js prismjs resolve-url-loader'
 
-run "yarn install"
-
-file "config/webpack/environment.js", <<-CODE
-const { environment } = require('@rails/webpacker')
-
-environment.loaders.get('sass').use.splice(-1, 0, {
-  loader: 'resolve-url-loader'
-});
-
-const nodeModulesLoader = environment.loaders.get('nodeModules');
-if (!Array.isArray(nodeModulesLoader.exclude)) {
-  nodeModulesLoader.exclude =
-    nodeModulesLoader.exclude == null ? [] : [nodeModulesLoader.exclude];
-}
-
-module.exports = environment;
+file 'config/sidekiq.yml', <<-CODE
+:concurrency: 1
+:timeout: 60
+:verbose: true
+:queues:  # Queue priority: https://github.com/mperham/sidekiq/wiki/Advanced-Options
+  - default
+  - mailers
 CODE
 
-file 'app/views/application/_head.html.erb', <<-CODE
-<head>
-  <title>Sheen</title>
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
-  <%= action_cable_meta_tag %>
-  <%= javascript_pack_tag 'application', 'data-turbolinks-track': 'reload' %>
-  <%= stylesheet_pack_tag 'application', media: 'all', 'data-turbolinks-track': 'reload' %>
-</head>
+file 'Procfile', <<-CODE
+  web: bundle exec puma.rb -C config/puma.rb
+  assets: webpack-dev-server
+  worker: bundle exec sidekiq -C config/sidekiq.yml
 CODE
 
-file 'app/views/application/_navbar.html.erb', <<-CODE
-<nav class="navbar navbar-dark w-100">
-  <div class="container">
-    <%= link_to root_url, class: 'navbar-brand' do %>
-      Sheen
-    <% end %>
-    <ul class="navbar-nav flex-row">
-      <li class="nav-item ml-5">
-        <%= link_to 'link', '', class: 'nav-link' %>
-      </li>
-      <li class="nav-item ml-5">
-        <%= link_to 'link', '', class: 'nav-link' %>
-      </li>
-      <li class="nav-item ml-5">
-        <%= link_to 'link', '', class: 'nav-link font-weight-bold' %>
-      </li>
-    </ul>
-  </div>
-</nav>
-CODE
-
-file 'app/views/layouts/application.html.erb', <<-CODE
-<!DOCTYPE html>
-<html>
-  <%= render 'head' %>
-
-  <body>
-    <%= render 'navbar' %>
-    <%= yield %>
-  </body>
-</html>
-CODE
-
-
-run %Q{ curl -O https://raw.githubusercontent.com/guilherme-andrade/boilerplates/master/sheen/javascript.zip }
-run %Q{ unzip javascript.zip -d app }
-run %Q{ rm javascript.zip }
-
-generate :controller, "static home"
-route "root to: 'static#home'"
-
-add_users if yes?('Add Users?')
-pwa if yes?('Progressive Web App (PWA)?')
+run %Q{ sed '15i\\\nrequire "view_component/engine"\\\n' config/application.rb }
 
 after_bundle do
+
+  file 'config/webpack/environment.js', <<-CODE
+  const { environment } = require('@rails/webpacker')
+  environment.loaders.get('sass').use.splice(-1, 0, {
+    loader: 'resolve-url-loader'
+  });
+  const nodeModulesLoader = environment.loaders.get('nodeModules');
+  if (!Array.isArray(nodeModulesLoader.exclude)) {
+    nodeModulesLoader.exclude =
+      nodeModulesLoader.exclude == null ? [] : [nodeModulesLoader.exclude];
+  }
+  module.exports = environment;
+  CODE
+
+  run %Q{ curl -O https://raw.githubusercontent.com/guilherme-andrade/boilerplates/master/sheen/javascript.zip }
+  run %Q{ unzip -o javascript.zip -d app }
+  run %Q{ rm javascript.zip }
+  run %Q{ rm -rf app/assets }
+
+  run %Q{ curl -O https://raw.githubusercontent.com/guilherme-andrade/boilerplates/master/sheen/views.zip }
+  run %Q{ unzip -o views.zip -d app }
+  run %Q{ rm views.zip }
+
+  add_users if yes?('Add Users?')
+  pwa if yes?('Progressive Web App (PWA)?')
+
+  rails_command 'db:create'
+  rails_command 'db:migrate'
+
   git :init
   git add: "."
   git commit: %Q{ -m 'Initial commit' }
-  run "hub create" if yes?('Create Repository?')
-  git push: 'origin master'
+  create_repo_and_push if yes?('Create Repository?')
+
+  run 'foreman start'
 end
 
