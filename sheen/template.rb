@@ -62,6 +62,7 @@ gem 'bootsnap', '>= 1.4.2', require: false
 gem 'cloudinary'
 gem 'figaro'
 gem 'image_processing', '~> 1.2'
+gem 'inline_svg'
 gem 'pg', '>= 0.18', '< 2.0'
 gem 'puma', '~> 4.1'
 gem 'rails', '~> 6.0.3'
@@ -79,9 +80,7 @@ end
 
 gem_group :development do
   gem 'foreman'
-  gem 'guard-livereload'
   gem 'listen', '~> 3.2'
-  gem 'rack-livereload'
   gem 'spring-watcher-listen', '~> 2.0.0'
   gem 'spring'
   gem 'web-console', '>= 3.3.0'
@@ -89,6 +88,7 @@ end
 
 run 'bundle install'
 
+rails_command 'webpacker:install'
 rails_command 'generate simple_form:install'
 rails_command 'generate simple_form:install --bootstrap'
 rails_command 'stimulus_reflex:install'
@@ -105,7 +105,7 @@ config.generators do |generate|
 end
 CODE
 
-run 'yarn add bootstrap@^5.0.0-alpha1 bootstrap-icons animate.css axios trix popper.js prismjs resolve-url-loader'
+run 'yarn add bootstrap@^5.0.0-alpha1 bootstrap-icons animate.css axios @rails/actiontext trix popper.js prismjs'
 
 file 'config/sidekiq.yml', <<-CODE
 :concurrency: 1
@@ -122,34 +122,23 @@ file 'Procfile', <<-CODE
   worker: bundle exec sidekiq -C config/sidekiq.yml
 CODE
 
-run %Q{ sed '15i\\\nrequire "view_component/engine"\\\n' config/application.rb }
+run %Q{ curl -O https://raw.githubusercontent.com/guilherme-andrade/boilerplates/master/sheen/javascript.zip }
+run %Q{ unzip -o javascript.zip -d app }
+run %Q{ rm javascript.zip }
+run %Q{ rm -rf app/assets }
+
+run %Q{ curl -O https://raw.githubusercontent.com/guilherme-andrade/boilerplates/master/sheen/views.zip }
+run %Q{ unzip -o views.zip -d app }
+run %Q{ rm views.zip }
+
+add_users if yes?('Add Users?')
+pwa if yes?('Progressive Web App (PWA)?')
 
 after_bundle do
+  run %Q{ sed '11i\\\n# ' config/application.rb }
+  run %Q{ sed '12i\\\n# ' config/application.rb }
 
-  file 'config/webpack/environment.js', <<-CODE
-  const { environment } = require('@rails/webpacker')
-  environment.loaders.get('sass').use.splice(-1, 0, {
-    loader: 'resolve-url-loader'
-  });
-  const nodeModulesLoader = environment.loaders.get('nodeModules');
-  if (!Array.isArray(nodeModulesLoader.exclude)) {
-    nodeModulesLoader.exclude =
-      nodeModulesLoader.exclude == null ? [] : [nodeModulesLoader.exclude];
-  }
-  module.exports = environment;
-  CODE
-
-  run %Q{ curl -O https://raw.githubusercontent.com/guilherme-andrade/boilerplates/master/sheen/javascript.zip }
-  run %Q{ unzip -o javascript.zip -d app }
-  run %Q{ rm javascript.zip }
-  run %Q{ rm -rf app/assets }
-
-  run %Q{ curl -O https://raw.githubusercontent.com/guilherme-andrade/boilerplates/master/sheen/views.zip }
-  run %Q{ unzip -o views.zip -d app }
-  run %Q{ rm views.zip }
-
-  add_users if yes?('Add Users?')
-  pwa if yes?('Progressive Web App (PWA)?')
+  run %Q{ sed '15i\\\nrequire "view_component/engine"\\\n' config/application.rb }
 
   rails_command 'db:create'
   rails_command 'db:migrate'
@@ -158,7 +147,5 @@ after_bundle do
   git add: "."
   git commit: %Q{ -m 'Initial commit' }
   create_repo_and_push if yes?('Create Repository?')
-
-  run 'foreman start'
 end
 
